@@ -1,0 +1,404 @@
+{
+  "meta": {
+    "games_per_cell": 3000,
+    "seeds": "0..2999",
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "boards": {
+      "beginner": {
+        "rows": 9,
+        "cols": 9,
+        "mines": 10
+      },
+      "intermediate": {
+        "rows": 16,
+        "cols": 16,
+        "mines": 40
+      },
+      "expert": {
+        "rows": 16,
+        "cols": 30,
+        "mines": 99
+      }
+    },
+    "total_seconds": 264.9179642000008,
+    "date": "2026-11-18 21:49"
+  },
+  "summary": [
+    {
+      "board": "beginner",
+      "player": "random",
+      "label": "Random",
+      "games": 3000,
+      "wins": 0,
+      "win_rate": 0.0,
+      "ci_low": 1.0842021724855044e-19,
+      "ci_high": 0.0012788956648046956,
+      "guesses_per_game": 4.075,
+      "guesses_per_won_game": null,
+      "revealed_fraction": 0.5676384976525821,
+      "ms_per_move": 0.004423796390659254,
+      "ms_per_analysis": 0.0,
+      "ms_analysis_p95": 0.0,
+      "ms_analysis_max": 0.0,
+      "analyses": 0,
+      "approx_analyses": 0,
+      "max_component": 0,
+      "mean_guess_risk": null,
+      "deaths_by_reason": {
+        "random": 3000
+      },
+      "seconds": 0.4694360000003144
+    },
+    {
+      "board": "beginner",
+      "player": "rules",
+      "label": "Local rules",
+      "games": 3000,
+      "wins": 2011,
+      "win_rate": 0.6703333333333333,
+      "ci_low": 0.6533028149877703,
+      "ci_high": 0.6869281745557528,
+      "guesses_per_game": 1.9833333333333334,
+      "guesses_per_won_game": 1.6946792640477375,
+      "revealed_fraction": 0.7840798122065727,
+      "ms_per_move": 0.031274369713650385,
+      "ms_per_analysis": 0.0956955252527404,
+      "ms_analysis_p95": 0.14790000022912864,
+      "ms_analysis_max": 0.4067999998369487,
+      "analyses": 14593,
+      "approx_analyses": 0,
+      "max_component": 0,
+      "mean_guess_risk": 0.16230704794886092,
+      "deaths_by_reason": {
+        "forced-guess": 989
+      },
+      "seconds": 2.1621279999999388
+    },
+    {
+      "board": "beginner",
+      "player": "logic",
+      "label": "Logic only",
+      "games": 3000,
+      "wins": 2386,
+      "win_rate": 0.7953333333333333,
+      "ci_low": 0.7805223719067427,
+      "ci_high": 0.8093888937205793,
+      "guesses_per_game": 1.443,
+      "guesses_per_won_game": 1.295054484492875,
+      "revealed_fraction": 0.8235023474178403,
+      "ms_per_move": 0.1017525799968745,
+      "ms_per_analysis": 0.43400763707001694,
+      "ms_analysis_p95": 0.48300000071321847,
+      "ms_analysis_max": 263.2861000001867,
+      "analyses": 11837,
+      "approx_analyses": 3,
+      "max_component": 42,
+      "mean_guess_risk": 0.13895459304166888,
+      "deaths_by_reason": {
+        "forced-guess": 614
+      },
+      "seconds": 5.975001199999497
+    },
+    {
+      "board": "beginner",
+      "player": "probability",
+      "label": "Logic + probability",
+      "games": 3000,
+      "wins": 2556,
+      "win_rate": 0.852,
+      "ci_low": 0.8388428903880114,
+      "ci_high": 0.864256767063966,
+      "guesses_per_game": 1.0866666666666667,
+      "guesses_per_won_game": 1.0234741784037558,
+      "revealed_fraction": 0.8751267605633802,
+      "ms_per_move": 0.052796305170983805,
+      "ms_per_analysis": 0.18380685349867157,
+      "ms_analysis_p95": 0.3210000004401081,
+      "ms_analysis_max": 31.472300000132236,
+      "analyses": 11775,
+      "approx_analyses": 0,
+      "max_component": 33,
+      "mean_guess_risk": 0.12327477868214771,
+      "deaths_by_reason": {
+        "min-probability": 444
+      },
+      "seconds": 3.6646127000003617
+    },
+    {
+      "board": "intermediate",
+      "player": "random",
+      "label": "Random",
+      "games": 3000,
+      "wins": 0,
+      "win_rate": 0.0,
+      "ci_low": 1.0842021724855044e-19,
+      "ci_high": 0.0012788956648046956,
+      "guesses_per_game": 5.076333333333333,
+      "guesses_per_won_game": null,
+      "revealed_fraction": 0.2579614197530864,
+      "ms_per_move": 0.011571967740918105,
+      "ms_per_analysis": 0.0,
+      "ms_analysis_p95": 0.0,
+      "ms_analysis_max": 0.0,
+      "analyses": 0,
+      "approx_analyses": 0,
+      "max_component": 0,
+      "mean_guess_risk": null,
+      "deaths_by_reason": {
+        "random": 3000
+      },
+      "seconds": 0.7555773000003683
+    },
+    {
+      "board": "intermediate",
+      "player": "rules",
+      "label": "Local rules",
+      "games": 3000,
+      "wins": 1020,
+      "win_rate": 0.34,
+      "ci_low": 0.32326277990372565,
+      "ci_high": 0.35714646670901196,
+      "guesses_per_game": 3.2383333333333333,
+      "guesses_per_won_game": 2.9284313725490194,
+      "revealed_fraction": 0.6133240740740741,
+      "ms_per_move": 0.053076613238833,
+      "ms_per_analysis": 0.2865255621635362,
+      "ms_analysis_p95": 0.47139999969658675,
+      "ms_analysis_max": 3.6913000003551133,
+      "analyses": 26727,
+      "approx_analyses": 0,
+      "max_component": 0,
+      "mean_guess_risk": 0.19607293090393396,
+      "deaths_by_reason": {
+        "forced-guess": 1980
+      },
+      "seconds": 10.09141499999987
+    },
+    {
+      "board": "intermediate",
+      "player": "logic",
+      "label": "Logic only",
+      "games": 3000,
+      "wins": 1786,
+      "win_rate": 0.5953333333333334,
+      "ci_low": 0.5776581897687455,
+      "ci_high": 0.6127646341244984,
+      "guesses_per_game": 2.1743333333333332,
+      "guesses_per_won_game": 1.9098544232922732,
+      "revealed_fraction": 0.6886805555555555,
+      "ms_per_move": 0.09955155075902529,
+      "ms_per_analysis": 0.7707188156418852,
+      "ms_analysis_p95": 0.7741999997961102,
+      "ms_analysis_max": 359.3831999996837,
+      "analyses": 22375,
+      "approx_analyses": 14,
+      "max_component": 60,
+      "mean_guess_risk": 0.18280197936851117,
+      "deaths_by_reason": {
+        "forced-guess": 1214
+      },
+      "seconds": 19.87854779999998
+    },
+    {
+      "board": "intermediate",
+      "player": "probability",
+      "label": "Logic + probability",
+      "games": 3000,
+      "wins": 2130,
+      "win_rate": 0.71,
+      "ci_low": 0.6935019295704533,
+      "ci_high": 0.7259609342503287,
+      "guesses_per_game": 2.227333333333333,
+      "guesses_per_won_game": 2.1065727699530514,
+      "revealed_fraction": 0.7994598765432098,
+      "ms_per_move": 0.07769615472819419,
+      "ms_per_analysis": 0.5564992675935713,
+      "ms_analysis_p95": 0.8607000008851173,
+      "ms_analysis_max": 109.539400000358,
+      "analyses": 25942,
+      "approx_analyses": 0,
+      "max_component": 55,
+      "mean_guess_risk": 0.13451300846899417,
+      "deaths_by_reason": {
+        "min-probability": 870
+      },
+      "seconds": 18.664932300000146
+    },
+    {
+      "board": "expert",
+      "player": "random",
+      "label": "Random",
+      "games": 3000,
+      "wins": 0,
+      "win_rate": 0.0,
+      "ci_low": 1.0842021724855044e-19,
+      "ci_high": 0.0012788956648046956,
+      "guesses_per_game": 4.656666666666666,
+      "guesses_per_won_game": null,
+      "revealed_fraction": 0.07496062992125985,
+      "ms_per_move": 0.017814696523075255,
+      "ms_per_analysis": 0.0,
+      "ms_analysis_p95": 0.0,
+      "ms_analysis_max": 0.0,
+      "analyses": 0,
+      "approx_analyses": 0,
+      "max_component": 0,
+      "mean_guess_risk": null,
+      "deaths_by_reason": {
+        "random": 3000
+      },
+      "seconds": 0.675896400000056
+    },
+    {
+      "board": "expert",
+      "player": "rules",
+      "label": "Local rules",
+      "games": 3000,
+      "wins": 33,
+      "win_rate": 0.011,
+      "ci_low": 0.007843289809706588,
+      "ci_high": 0.015407470150472407,
+      "guesses_per_game": 4.372333333333334,
+      "guesses_per_won_game": 6.96969696969697,
+      "revealed_fraction": 0.23233070866141733,
+      "ms_per_move": 0.08590672639762707,
+      "ms_per_analysis": 0.38736695867087995,
+      "ms_analysis_p95": 0.7797999996910221,
+      "ms_analysis_max": 4.754999999931897,
+      "analyses": 26712,
+      "approx_analyses": 0,
+      "max_component": 0,
+      "mean_guess_risk": 0.22423656366909736,
+      "deaths_by_reason": {
+        "forced-guess": 2967
+      },
+      "seconds": 12.805161299999781
+    },
+    {
+      "board": "expert",
+      "player": "logic",
+      "label": "Logic only",
+      "games": 3000,
+      "wins": 595,
+      "win_rate": 0.19833333333333333,
+      "ci_low": 0.1844541519270929,
+      "ci_high": 0.21298411512400595,
+      "guesses_per_game": 3.3436666666666666,
+      "guesses_per_won_game": 3.3260504201680674,
+      "revealed_fraction": 0.4200096237970254,
+      "ms_per_move": 0.25104322908070115,
+      "ms_per_analysis": 1.9475111236769296,
+      "ms_analysis_p95": 2.8519999996206025,
+      "ms_analysis_max": 510.5278000000908,
+      "analyses": 33613,
+      "approx_analyses": 42,
+      "max_component": 75,
+      "mean_guess_risk": 0.2351366961525141,
+      "deaths_by_reason": {
+        "forced-guess": 2405
+      },
+      "seconds": 69.99165679999987
+    },
+    {
+      "board": "expert",
+      "player": "probability",
+      "label": "Logic + probability",
+      "games": 3000,
+      "wins": 1081,
+      "win_rate": 0.36033333333333334,
+      "ci_low": 0.3433419586174914,
+      "ci_high": 0.37768194623821083,
+      "guesses_per_game": 4.043,
+      "guesses_per_won_game": 4.487511563367253,
+      "revealed_fraction": 0.6283228346456693,
+      "ms_per_move": 0.2851795091391828,
+      "ms_per_analysis": 2.066842306748498,
+      "ms_analysis_p95": 2.8947999999218155,
+      "ms_analysis_max": 426.0492000012164,
+      "analyses": 52793,
+      "approx_analyses": 81,
+      "max_component": 69,
+      "mean_guess_risk": 0.15968099198379299,
+      "deaths_by_reason": {
+        "min-probability": 1919
+      },
+      "seconds": 119.64953139999943
+    }
+  ],
+  "paired": [
+    {
+      "board": "beginner",
+      "a": "probability",
+      "b": "logic",
+      "only_a_won": 449,
+      "only_b_won": 279,
+      "mcnemar_chi2": 39.232142857142854
+    },
+    {
+      "board": "beginner",
+      "a": "logic",
+      "b": "rules",
+      "only_a_won": 386,
+      "only_b_won": 11,
+      "mcnemar_chi2": 352.33249370277076
+    },
+    {
+      "board": "beginner",
+      "a": "probability",
+      "b": "rules",
+      "only_a_won": 779,
+      "only_b_won": 234,
+      "mcnemar_chi2": 292.1382033563672
+    },
+    {
+      "board": "intermediate",
+      "a": "probability",
+      "b": "logic",
+      "only_a_won": 732,
+      "only_b_won": 388,
+      "mcnemar_chi2": 105.04375
+    },
+    {
+      "board": "intermediate",
+      "a": "logic",
+      "b": "rules",
+      "only_a_won": 804,
+      "only_b_won": 38,
+      "mcnemar_chi2": 695.041567695962
+    },
+    {
+      "board": "intermediate",
+      "a": "probability",
+      "b": "rules",
+      "only_a_won": 1336,
+      "only_b_won": 226,
+      "mcnemar_chi2": 787.3758002560819
+    },
+    {
+      "board": "expert",
+      "a": "probability",
+      "b": "logic",
+      "only_a_won": 756,
+      "only_b_won": 270,
+      "mcnemar_chi2": 229.26413255360623
+    },
+    {
+      "board": "expert",
+      "a": "logic",
+      "b": "rules",
+      "only_a_won": 570,
+      "only_b_won": 8,
+      "mcnemar_chi2": 544.5
+    },
+    {
+      "board": "expert",
+      "a": "probability",
+      "b": "rules",
+      "only_a_won": 1068,
+      "only_b_won": 20,
+      "mcnemar_chi2": 1007.5450367647059
+    }
+  ]
+}

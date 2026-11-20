@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Safe Moves Minesweeper Agent</title>
+<link rel="stylesheet" href="/web/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232a78d6'/><text x='16' y='23' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'>1</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="title"><span class="logo">⚑</span>
+        <span>Logic and Probability for Safe Moves <span class="sub">· a Minesweeper-playing agent · COMP 8700</span></span>
+      </div>
+      <button class="theme-btn" id="themeBtn" title="Switch light / dark">◐ Theme</button>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="overview"><span class="num">1</span>Overview</button>
+      <button data-tab="agent"><span class="num">2</span>Problem &amp; agent</button>
+      <button data-tab="logic"><span class="num">3</span>Logic (Ch 7)</button>
+      <button data-tab="probability"><span class="num">4</span>Probability (Ch 12)</button>
+      <button data-tab="walkthrough"><span class="num">5</span>Step by step</button>
+      <button data-tab="live"><span class="num">6</span>Live board</button>
+      <button data-tab="experiment"><span class="num">7</span>Main experiment</button>
+      <button data-tab="experiments"><span class="num">8</span>Results (3,000 games)</button>
+      <button data-tab="chapters"><span class="num">9</span>Chapters &amp; references</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- =============================================================== OVERVIEW -->
+<section class="tab" id="tab-overview">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">COMP 8700 · Introduction to AI · Course project</div>
+      <h1>An agent that proves which squares are safe, and when it can't, takes the smallest risk.</h1>
+      <p class="lead">Minesweeper is a partially observable world: the agent sees only the numbers it has
+        uncovered. Our agent treats those numbers as a <b>knowledge base</b> and uses <b>logical entailment</b>
+        (AIMA Ch. 7) to find squares that are certainly safe or certainly mines, just as the textbook's
+        Wumpus World agent reasons about pits. When logic cannot decide, it computes the exact
+        <b>probability</b> that each square holds a mine (AIMA Ch. 12) and reveals the safest one.</p>
+      <div>
+        <span class="pill">Ch 7 · Logical agents</span><span class="pill">Ch 12 · Quantifying uncertainty</span>
+        <span class="pill gray">Ch 4.4 · Belief states</span><span class="pill gray">Ch 2 · Agent types</span>
+        <span class="pill gray">Ch 13 · Bayesian networks (view)</span>
+      </div>
+    </div>
+    <div class="grid g2" id="heroStats">
+      <div class="card stat"><div class="v" data-stat="beginner/probability/win_rate">–</div><div class="l">wins on <b>beginner</b> (9×9, 10 mines)</div><div class="ci" data-stat="beginner/probability/ci">&nbsp;</div></div>
+      <div class="card stat"><div class="v" data-stat="intermediate/probability/win_rate">–</div><div class="l">wins on <b>intermediate</b> (16×16, 40)</div><div class="ci" data-stat="intermediate/probability/ci">&nbsp;</div></div>
+      <div class="card stat"><div class="v" data-stat="expert/probability/win_rate">–</div><div class="l">wins on <b>expert</b> (16×30, 99)</div><div class="ci" data-stat="expert/probability/ci">&nbsp;</div></div>
+      <div class="card stat"><div class="v" data-stat="expert/probability/ms_per_analysis">–</div><div class="l">average reasoning time per analysis on expert</div><div class="ci" data-stat="meta/games">&nbsp;</div></div>
+    </div>
+  </div>
+
+  <h2>How the agent thinks, every move</h2>
+  <div class="pipeline">
+    <div class="stage"><div class="k">1 · Percept</div><div class="t">Read the board</div><div class="d">Which squares are open and what numbers they show. Mines are never visible.</div></div>
+    <div class="stage logic"><div class="k">2 · Knowledge base</div><div class="t">Numbers → sentences</div><div class="d">Each number <i>n</i> says "exactly <i>n</i> of my hidden neighbours are mines".</div></div>
+    <div class="stage logic"><div class="k">3 · Logic (Ch 7)</div><div class="t">Prove safe / mine</div><div class="d">A square is safe iff <b>no</b> model of the KB puts a mine on it (entailment by model checking).</div></div>
+    <div class="stage prob"><div class="k">4 · Probability (Ch 12)</div><div class="t">If nothing is proven</div><div class="d">Count the consistent mine layouts → exact P(mine) for every square.</div></div>
+    <div class="stage"><div class="k">5 · Action</div><div class="t">Reveal one square</div><div class="d">A proven-safe square, or else the one with the lowest P(mine).</div></div>
+  </div>
+
+  <h2>Four players, compared on the same boards</h2>
+  <div class="grid g4">
+    <div class="card player-card" style="--c: var(--series-4)"><h3><span class="swatch"></span>Random</h3>
+      <p class="small">Clicks any hidden square. A <b>simple reflex agent</b> that ignores its percepts: the floor every method must beat.</p></div>
+    <div class="card player-card" style="--c: var(--series-3)"><h3><span class="swatch"></span>Local rules</h3>
+      <p class="small">Uses only the two single-number rules ("all mines found → rest safe", "hidden = missing → all mines"). Sound but <b>incomplete</b> inference; guesses at random when stuck.</p></div>
+    <div class="card player-card" style="--c: var(--series-2)"><h3><span class="swatch"></span>Logic only</h3>
+      <p class="small">Full logical inference over the whole knowledge base, including the total mine count. A <b>goal-based knowledge-based agent</b>. When nothing is entailed it must make a random <b>forced guess</b>.</p></div>
+    <div class="card player-card" style="--c: var(--series-1)"><h3><span class="swatch"></span>Logic + probability</h3>
+      <p class="small">The same logic first; when stuck, reveals the square with the <b>lowest probability of a mine</b>. A <b>utility-based agent</b> (maximum expected utility, Ch 12.1).</p></div>
+  </div>
+
+
+  <h2>Where to go next</h2>
+  <div class="grid g3">
+    <div class="card"><h3>See it reason</h3><p class="small">The <a href="#walkthrough">Step-by-step</a> tab pauses the agent and shows each stage of one decision on a real board: the sentences, the proofs, the models, the probabilities.</p></div>
+    <div class="card"><h3>Watch it play</h3><p class="small">The <a href="#live">Live board</a> runs any of the four players on any board size, with the probability overlay. You can also play yourself with the agent as an advisor.</p></div>
+    <div class="card"><h3>Check the evidence</h3><p class="small">The <a href="#experiments">Experiments</a> tab has win rates with 95% intervals, paired significance tests, timing and a calibration test.</p></div>
+  </div>
+</section>
+
+<!-- =============================================================== PROBLEM & AGENT -->
+<section class="tab" id="tab-agent">
+  <div class="prose">
+    <div class="eyebrow">AIMA Ch. 2 (agents) · Ch. 3 (problem formulation) · Ch. 4.4 (belief states)</div>
+    <h1>The problem and the agent</h1>
+    <p class="lead">Before any algorithm, AIMA asks us to pin down the task environment and the kind of agent we
+      are building. This tab does that for Minesweeper.</p>
+
+    <h2>The game</h2>
+    <p>The board is a grid of squares; some hold mines. Revealing a square either ends the game (a mine) or shows a
+      number: how many of its up-to-8 neighbours are mines. A 0 automatically opens its neighbours. The agent wins
+      when every non-mine square is revealed. We use the three standard sizes: <b>beginner</b> 9×9 with 10 mines,
+      <b>intermediate</b> 16×16 with 40, <b>expert</b> 16×30 with 99. As in the classic game, the
+      <b>first click is always safe</b> (mines are placed after it). Our reasoning players open the centre square.</p>
+
+    <h2>PEAS description (AIMA 2.3.1)</h2>
+    <div class="table-wrap"><table>
+      <tr><th>Performance measure</th><td>Win the game (reveal every safe square without hitting a mine). Secondary: fewer guesses, less time per move.</td></tr>
+      <tr><th>Environment</th><td>A rows×cols grid with a fixed number of mines placed uniformly at random after the first click.</td></tr>
+      <tr><th>Actuators</th><td>Reveal(square). (Flagging is bookkeeping only; it never changes the outcome, so our agent records proven mines internally instead.)</td></tr>
+      <tr><th>Sensors</th><td>The number on every revealed square, which squares are still hidden, and the total mine count.</td></tr>
+    </table></div>
+
+    <h2>Properties of the task environment (AIMA 2.3.2)</h2>
+    <div class="table-wrap"><table>
+      <tr><th>Property</th><th>Minesweeper</th><th>Why</th></tr>
+      <tr><td>Observable?</td><td><b>Partially</b></td><td>Mines are hidden; only revealed numbers are sensed. This is the property that makes the problem interesting.</td></tr>
+      <tr><td>Agents</td><td><b>Single-agent</b></td><td>No opponent: mines are placed once, at random, and never move. (So minimax from Ch 6 does not apply.)</td></tr>
+      <tr><td>Deterministic?</td><td><b>Deterministic</b></td><td>Given the hidden layout, every reveal has one fixed result. All uncertainty comes from not seeing the layout, not from random effects of actions.</td></tr>
+      <tr><td>Episodic?</td><td><b>Sequential</b></td><td>Each reveal changes what is known for later moves, and one bad move ends the episode.</td></tr>
+      <tr><td>Static?</td><td><b>Static</b></td><td>The board does not change while the agent thinks (we ignore the game clock).</td></tr>
+      <tr><td>Discrete?</td><td><b>Discrete</b></td><td>Finitely many squares, actions and percepts.</td></tr>
+      <tr><td>Known?</td><td><b>Known</b></td><td>The rules (what a number means) are known to the agent; only the layout is not.</td></tr>
+    </table></div>
+
+    <h2>Problem formulation (AIMA 3.1.1)</h2>
+    <div class="table-wrap"><table>
+      <tr><th>States</th><td>The true world state is (mine layout, set of revealed squares). The agent cannot see it, so it reasons over <b>belief states</b> instead (below).</td></tr>
+      <tr><th>Initial state</th><td>All squares hidden; the mine total <i>M</i> is known.</td></tr>
+      <tr><th>Actions</th><td>Reveal(x) for any hidden square x.</td></tr>
+      <tr><th>Transition model</th><td>If x is a mine: the game is lost. Otherwise x shows its number; a 0 opens its neighbours recursively.</td></tr>
+      <tr><th>Percept</th><td>The newly shown numbers.</td></tr>
+      <tr><th>Goal test</th><td>Every non-mine square is revealed.</td></tr>
+      <tr><th>Cost</th><td>Not a path cost: the measure is whether the agent survives, so the objective is the probability of winning.</td></tr>
+    </table></div>
+    <p>Classical search (Ch 3) cannot solve this directly: there is no known path to a goal, because the result of
+      each action depends on hidden information. That is why the agent needs the tools of Chapters 4, 7 and 12.</p>
+
+    <h2>The belief state (AIMA 4.4)</h2>
+    <p>In a partially observable environment the agent keeps a <b>belief state</b>: the set of world states it
+      might be in. For Minesweeper the belief state is the set of all mine layouts that agree with every number seen
+      so far. Revealing a square does not move any mine, so the "predict" step is trivial; the "update" step filters
+      the set by the new number. Each reveal can only shrink the belief state: the agent becomes less confused.</p>
+    <div class="callout"><b>The key link between chapters</b>
+      A square is <b>certainly safe</b> exactly when it is safe in <i>every</i> layout of the belief state. That is
+      the definition of logical entailment in Chapter 7 (KB ⊨ ¬M<sub>x</sub>). And if every layout in the belief
+      state is equally likely, the fraction of layouts with a mine on x is the probability of Chapter 12. The belief
+      state is too large to list explicitly, so the agent represents it compactly with logic, as AIMA 4.4 suggests.</div>
+
+    <h2>Which kind of agent is each player? (AIMA 2.4)</h2>
+    <div class="table-wrap"><table>
+      <tr><th>Player</th><th>AIMA agent type</th><th>Explanation</th></tr>
+      <tr><td><span class="swatch" style="--c:var(--series-4)"></span> Random</td><td>Simple reflex agent (randomised)</td><td>Its action does not depend on the percept at all, only on which squares are still hidden.</td></tr>
+      <tr><td><span class="swatch" style="--c:var(--series-3)"></span> Local rules</td><td>Model-based reflex agent</td><td>Condition-action rules applied to one number at a time; keeps track of proven mines.</td></tr>
+      <tr><td><span class="swatch" style="--c:var(--series-2)"></span> Logic only</td><td>Model-based, <b>goal-based</b> knowledge-based agent</td><td>TELLs its KB the percepts, ASKs which squares are entailed safe, acts on a proof. Like the hybrid Wumpus agent (AIMA 7.7.2), it must "take a risk" when nothing is provable, but it has no way to compare risks.</td></tr>
+      <tr><td><span class="swatch" style="--c:var(--series-1)"></span> Logic + probability</td><td>Model-based, <b>utility-based</b> agent</td><td>With utility 1 for surviving the move and 0 for hitting a mine, the expected utility of revealing x is 1 − P(mine at x). Picking the minimum-probability square is the maximum-expected-utility choice (AIMA 12.1.3).</td></tr>
+    </table></div>
+    <p class="small muted">State representation: <b>factored</b> (AIMA 2.4.7): one Boolean variable per square, "mine or not".
+      This is exactly the representation that propositional logic (Ch 7) and Bayesian networks (Ch 13) work with.</p>
+  </div>
+</section>
+
+<!-- =============================================================== LOGIC -->
+<section class="tab" id="tab-logic">
+  <div class="prose">
+    <div class="eyebrow">AIMA Ch. 7 · Logical agents · Core technique #1</div>
+    <h1>Proving squares safe with logic</h1>
+    <p class="lead">Minesweeper is the Wumpus World with more squares and better sensors. A breeze says "at least one
+      neighbouring pit"; a Minesweeper number says exactly how many neighbouring mines. The agent's job is the same:
+      separate what it has <b>established</b> from what is merely <b>possible</b>.</p>
+
+    <h2>The Wumpus World, translated</h2>
+    <div class="table-wrap"><table>
+      <tr><th>Wumpus World (AIMA 7.2)</th><th>Minesweeper</th></tr>
+      <tr><td>Pit in square [x,y]: symbol P<sub>x,y</sub></td><td>Mine in square x: symbol M<sub>x</sub></td></tr>
+      <tr><td>Breeze B<sub>x,y</sub> ⇔ a pit in some neighbour</td><td>Number n ⇔ <i>exactly n</i> neighbours hold mines</td></tr>
+      <tr><td>4 orthogonal neighbours</td><td>8 neighbours (including diagonals)</td></tr>
+      <tr><td>Agent moves square by square</td><td>Agent may reveal any hidden square</td></tr>
+      <tr><td>"[1,2] is safe": no model of the KB has a pit there</td><td>"x is safe": no model of the KB has a mine there</td></tr>
+      <tr><td>Hybrid agent takes a risk when no square is provably safe</td><td>Logic-only player makes a forced guess</td></tr>
+    </table></div>
+
+    <h2>1 · The knowledge base</h2>
+    <p>One proposition symbol per hidden square, M<sub>x</sub> = "x holds a mine". Every revealed number contributes one sentence,
+      and the mine counter contributes one more:</p>
+    <div class="formula">number n at c &nbsp;⟹&nbsp; exactly n of { M<sub>y</sub> : y a hidden neighbour of c } are true
+      <span class="note">plus the global sentence: exactly M of all M<sub>x</sub> are true (M = total mines)</span></div>
+    <p>"Exactly n of k" is not a single clause. Written in conjunctive normal form (AIMA 7.5.2) it becomes two families of clauses:</p>
+    <ul>
+      <li><b>at most n</b>: for every set of n+1 of the k squares, at least one is <i>not</i> a mine: C(k, n+1) clauses of negative literals;</li>
+      <li><b>at least n</b>: for every set of k−n+1 of the squares, at least one <i>is</i> a mine: C(k, k−n+1) clauses of positive literals.</li>
+    </ul>
+    <p class="small muted">This is the same construction AIMA uses for "exactly one wumpus" (7.4.3), generalised from one to n.</p>
+
+    <div class="card" id="cnfDemo">
+      <h3>Try it: a number in CNF</h3>
+      <div class="controls">
+        <label class="field">hidden neighbours k <input type="range" id="cnfK" min="1" max="8" value="5"></label>
+        <label class="field">number n <input type="range" id="cnfN" min="0" max="5" value="2"></label>
+        <div id="cnfSummary" class="small"></div>
+      </div>
+      <div class="clauses" id="cnfClauses"></div>
+      <p class="small muted" style="margin-bottom:0">Squares are named a, b, c…; <code>¬a</code> means "a is not a mine". The worst case, k = 8 and n = 4, needs 56 + 56 = 112 clauses for a single number.</p>
+    </div>
+
+    <h2>2 · Entailment: what does the agent know?</h2>
+    <p>A <b>model</b> is an assignment of true/false to every symbol (AIMA 7.3). The KB <b>entails</b> a sentence α,
+      written KB ⊨ α, when α is true in <i>every</i> model in which the KB is true. The agent asks two questions
+      about every hidden square x:</p>
+    <div class="formula">x is <b style="color:var(--good-text)">safe</b> &nbsp;⇔&nbsp; KB ⊨ ¬M<sub>x</sub> &nbsp;⇔&nbsp; KB ∧ M<sub>x</sub> is unsatisfiable
+      <br>x is a <b style="color:var(--critical)">mine</b> &nbsp;⇔&nbsp; KB ⊨ M<sub>x</sub> &nbsp;⇔&nbsp; KB ∧ ¬M<sub>x</sub> is unsatisfiable
+      <span class="note">the second form is proof by refutation (AIMA 7.5.2): add the opposite and derive a contradiction</span></div>
+
+    <h2>3 · How the agent decides entailment</h2>
+    <p><b>Stage A, single-number rules.</b> Two cheap, sound rules handle most moves. If a number already touches as many
+      proven mines as it shows, its other hidden neighbours are safe. If its unknown neighbours are exactly as many as
+      its missing mines, they are all mines. Each rule uses one sentence at a time, so on its own it is
+      <b>incomplete</b>, the same lesson as "Modus Ponens and And-Elimination alone are not complete" (7.5.1). This
+      stage alone is the <i>Local rules</i> player.</p>
+    <p><b>Stage B, model checking.</b> For everything else the agent enumerates models, like TT-ENTAILS? (AIMA 7.4.4),
+      with three improvements that keep it fast:</p>
+    <ol>
+      <li><b>Only the frontier.</b> Hidden squares that touch no number appear in no number-sentence; they only matter
+        through the global count, which is handled by counting (see the Probability tab), not enumeration.</li>
+      <li><b>Independent components.</b> The frontier splits into groups of squares that share no number. Each group
+        is checked separately: a 30-square frontier in three groups of 10 costs about 3·2<sup>10</sup> instead of 2<sup>30</sup>.</li>
+      <li><b>Pruning.</b> Squares are assigned in breadth-first order along the numbers, and a branch is abandoned as
+        soon as any number is overfull or can no longer be filled, the same "early termination" idea DPLL uses (7.6.1).</li>
+    </ol>
+    <p>Every surviving complete assignment is a model. A frontier square that is a mine in <b>no</b> model is
+      entailed safe; one that is a mine in <b>every</b> model is entailed to be a mine. The global mine count is
+      included exactly, so the logic is <b>complete</b> for the whole KB: if the agent finds no safe square, then no
+      sound and complete procedure could have found one (the test suite checks this against brute force).</p>
+
+<pre><code>function ASK-SAFE(percept, M):                    ▸ one agent step
+    KB ← sentences from every revealed number   ▸ TELL
+    apply single-number rules until no change    ▸ Stage A
+    split remaining sentences into components
+    for each component C:                        ▸ Stage B
+        models[C] ← all assignments of C's symbols satisfying C's numbers
+                    (backtracking, pruned on violated numbers)
+    combine components with the global count M  ▸ exact integer counting
+    safe  ← { x : x is a mine in no consistent model }
+    mines ← { x : x is a mine in every consistent model }
+    return safe, mines</code></pre>
+
+    <h2>4 · Soundness, completeness and cost</h2>
+    <ul>
+      <li><b>Sound:</b> a square is reported safe only if it is safe in every layout consistent with the evidence, so
+        a proven-safe move can never hit a mine. Thousands of test games confirm the agent never died on a proven move.</li>
+      <li><b>Complete:</b> model checking over all consistent models finds every entailed square. Resolution
+        (7.5.2) would reach the same conclusions, since it is refutation-complete (the ground resolution theorem), but it
+        would first need the exponentially many "exactly n" clauses above. Counting directly over the numbers is far cheaper.</li>
+      <li><b>Cost:</b> deciding whether a Minesweeper board is consistent is NP-complete (Kaye, 2000), so no method
+        is fast on every board. In practice, components on real boards stay small (we log the largest one seen),
+        and the agent falls back to an approximation if a component ever exceeds a search budget (counted in the experiments).</li>
+    </ul>
+    <div class="callout warn"><b>What logic cannot do</b>
+      Very often <i>no</i> square is entailed safe: a lone "1" touching two hidden squares is a coin-flip that no
+      amount of logic can resolve. AIMA makes the same point for the Wumpus agent: it can say the risky squares are
+      not provably safe, but cannot say which is <i>less</i> risky. That needs probability (Chapter 12).</div>
+  </div>
+</section>
+
+<!-- =============================================================== PROBABILITY -->
+<section class="tab" id="tab-probability">
+  <div class="prose">
+    <div class="eyebrow">AIMA Ch. 12 · Quantifying uncertainty · Core technique #2</div>
+    <h1>When logic runs out: the safest guess</h1>
+    <p class="lead">AIMA 12.7 revisits the Wumpus World and computes, for each unvisited square, the probability of a
+      pit. The same calculation, with mines for pits, tells our agent which guess is least likely to end the game.</p>
+
+    <h2>The textbook template (AIMA 12.7)</h2>
+    <p>In the book's example the agent has felt breezes in [1,2] and [2,1]. Pits occur independently with prior 0.2.
+      The squares split into the <b>frontier</b> (unknown squares next to a breeze) and <b>other</b> squares. Summing over
+      the frontier assignments that are consistent with the breezes, and noting that the "other" squares sum out to 1,
+      gives P(pit in [1,3]) ≈ 0.31 and P(pit in [2,2]) ≈ 0.86. The agent should avoid [2,2]. Three ideas carry over:
+      enumerate only the frontier, keep only consistent assignments, and weight each by how likely it is.</p>
+
+    <h2>The Minesweeper version</h2>
+    <p>Mines are not independent: there are <i>exactly</i> M of them, placed uniformly at random. So every complete
+      layout that agrees with the numbers is <b>equally likely</b>, and</p>
+    <div class="formula">P(M<sub>x</sub> | evidence) = (number of consistent layouts with a mine on x) / (number of consistent layouts)</div>
+    <p>We never list the unconstrained "interior" squares (AIMA's "other" squares) one by one. Let U be the number of
+      interior squares and R the number of mines not yet proven. A frontier assignment that uses k mines can be
+      completed in C(U, R−k) ways, so it stands for that many full layouts:</p>
+    <div class="formula">P(M<sub>x</sub>) = Σ<sub>frontier models f with x mined</sub> C(U, R−k<sub>f</sub>) &nbsp;/&nbsp; Σ<sub>all frontier models f</sub> C(U, R−k<sub>f</sub>)
+      <span class="note">every interior square shares one probability: the expected number of interior mines divided by U</span></div>
+    <p>All counts are exact Python integers (expert boards produce numbers with dozens of digits), so the probabilities are
+      exact, not estimated. With several independent components, their mine-count distributions are combined by
+      polynomial multiplication (convolution) before the binomial weighting. The tests compare every probability against
+      brute-force enumeration of all layouts.</p>
+
+    <h2>A worked example, and why the weighting matters</h2>
+    <p>Suppose a revealed <b>1</b> touches hidden squares <b>A, B, C</b>, and another revealed <b>1</b> touches <b>C, D</b>.
+      There are U = 10 interior squares and R = 3 mines left to place.</p>
+    <div class="table-wrap"><table>
+      <tr><th>Frontier model</th><th class="num">mines k</th><th class="num">ways to finish: C(10, 3−k)</th></tr>
+      <tr><td>C mined (satisfies both numbers)</td><td class="num">1</td><td class="num">C(10,2) = 45</td></tr>
+      <tr><td>A and D mined</td><td class="num">2</td><td class="num">C(10,1) = 10</td></tr>
+      <tr><td>B and D mined</td><td class="num">2</td><td class="num">C(10,1) = 10</td></tr>
+      <tr><th>Total</th><th></th><th class="num">65</th></tr>
+    </table></div>
+    <div class="table-wrap" style="margin-top:12px"><table>
+      <tr><th>Square</th><th class="num">Naive (count frontier models)</th><th class="num">Correct (weighted)</th></tr>
+      <tr><td>C</td><td class="num">1/3 = 0.33</td><td class="num"><b>45/65 = 0.69</b></td></tr>
+      <tr><td>D</td><td class="num">2/3 = 0.67</td><td class="num">20/65 = 0.31</td></tr>
+      <tr><td>A, B</td><td class="num">1/3 = 0.33</td><td class="num"><b>10/65 = 0.15</b></td></tr>
+      <tr><td>each interior square</td><td class="num">–</td><td class="num">(2·45 + 1·20)/(10·65) = 0.17</td></tr>
+    </table></div>
+    <p>Counting frontier models alone would call C the safest frontier square; the correct answer is that C is the
+      <i>most dangerous</i>. A one-mine explanation leaves more mines for the interior, and there are many more ways to
+      arrange those. The agent reveals A or B (0.15), which also beats a blind interior guess (0.17).</p>
+
+    <h2>Choosing the action: maximum expected utility (AIMA 12.1.3)</h2>
+    <p>Give utility 1 to surviving the move and 0 to hitting a mine. Then EU(reveal x) = 1 − P(M<sub>x</sub>), and the
+      rational choice is the square with the smallest mine probability. Ties are common (all interior squares share one
+      value), so we break them toward squares with fewer hidden neighbours, such as corners and edges, which are likelier
+      to be a 0 and open more of the board. That tie-break is a heuristic, not from the book.</p>
+    <div class="callout warn"><b>A limitation we acknowledge</b>
+      This is a <b>one-step greedy</b> policy: it maximises the chance of surviving the next move, not of winning the
+      whole game. A guess that is slightly riskier but reveals more information can sometimes be better later. The
+      fully optimal policy would require solving a POMDP over belief states; AIMA notes such problems are usually wildly
+      intractable, and poses finding even Minesweeper's best first move as an exercise (Ch 23). We do not attempt it.</div>
+
+    <h2>The same model as a Bayesian network (AIMA Ch. 13)</h2>
+    <p>Equivalently: each M<sub>x</sub> is a root node; each revealed number is a child of its neighbours' M nodes with a
+      <b>deterministic</b> CPT ("the count equals n"); one more node constrains the total. Our frontier enumeration is exactly
+      inference by enumeration (13.3.1) on this network, organised component by component the way variable elimination
+      exploits independence. Sampling methods (13.4) behave poorly here: with deterministic evidence, rejection sampling
+      rejects almost every sample and single-square Gibbs sampling gets stuck. That is one reason we compute exactly.</p>
+  </div>
+</section>
+
+<!-- =============================================================== WALKTHROUGH -->
+<section class="tab" id="tab-walkthrough">
+  <div class="eyebrow">Every stage of one decision, on a real board</div>
+  <h1>Step by step</h1>
+  <p class="lead" style="max-width:860px">The agent below is paused before each move. Use <b>Next stage</b> to walk
+    through its reasoning: percept → knowledge base → rules → components → model checking → probabilities → action.
+    Then <b>Make the move</b> and do it again. <b>Skip to an interesting move</b> fast-forwards to the next decision
+    that needs more than the simple rules.</p>
+  <div class="controls">
+    <label class="field">Board <select id="wtBoard">
+      <option value="beginner">Beginner 9×9 · 10</option>
+      <option value="intermediate">Intermediate 16×16 · 40</option>
+    </select></label>
+    <label class="field">Seed <input type="number" id="wtSeed" value="23" style="width:90px"></label>
+    <button class="btn" id="wtNew">New board</button>
+    <button class="btn" id="wtPrev">◀ Previous stage</button>
+    <button class="btn primary" id="wtNext">Next stage ▶</button>
+    <button class="btn" id="wtMove">Make the move</button>
+    <button class="btn" id="wtSkip">Skip to an interesting move ⏭</button>
+  </div>
+  <div class="phases" id="wtPhases"></div>
+  <div class="board-shell">
+    <div>
+      <div class="board-wrap"><div class="board" id="wtBoardEl"></div></div>
+      <div class="legend" id="wtLegend"></div>
+    </div>
+    <div class="card phase-body side" id="wtBody"></div>
+  </div>
+</section>
+
+<!-- =============================================================== LIVE -->
+<section class="tab" id="tab-live">
+  <div class="eyebrow">The agent playing complete games</div>
+  <h1>Live board</h1>
+  <div class="controls">
+    <label class="field">Board <select id="lvBoard">
+      <option value="beginner">Beginner 9×9 · 10</option>
+      <option value="intermediate" selected>Intermediate 16×16 · 40</option>
+      <option value="expert">Expert 16×30 · 99</option>
+    </select></label>
+    <label class="field">Player <select id="lvAgent">
+      <option value="probability">Logic + probability</option>
+      <option value="logic">Logic only</option>
+      <option value="rules">Local rules</option>
+      <option value="random">Random</option>
+      <option value="human">You play (agent advises)</option>
+    </select></label>
+    <label class="field">Seed (blank = random) <input type="number" id="lvSeed" placeholder="random" style="width:120px"></label>
+    <button class="btn" id="lvNew">New game</button>
+    <button class="btn primary" id="lvPlay">▶ Play</button>
+    <button class="btn" id="lvStep">Step</button>
+    <label class="field">Speed <input type="range" id="lvSpeed" min="0" max="100" value="70"></label>
+    <label class="toggle"><input type="checkbox" id="lvProbs" checked> Probability overlay</label>
+    <label class="toggle"><input type="checkbox" id="lvProofs" checked> Show proofs</label>
+  </div>
+  <div class="board-shell">
+    <div>
+      <div class="board-wrap"><div class="board" id="lvBoardEl"></div></div>
+      <div class="legend">
+        <span><i style="box-shadow:inset 0 0 0 2.5px var(--good)"></i>proven safe ✓</span>
+        <span><i style="box-shadow:inset 0 0 0 2.5px var(--critical)"></i>proven mine ⚑</span>
+        <span><span class="ramp"></span>P(mine) low → high</span>
+        <span><i style="outline:3px solid var(--accent);outline-offset:-3px"></i>last move</span>
+      </div>
+      <p class="small muted" id="lvHint" style="max-width:640px"></p>
+    </div>
+    <div class="side grid" style="gap:14px">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <b>Game</b><span class="status-badge" id="lvStatus">–</span></div>
+        <dl class="kv">
+          <dt>Player</dt><dd id="lvWho">–</dd>
+          <dt>Moves</dt><dd id="lvMoves">0</dd>
+          <dt>Guesses</dt><dd id="lvGuesses">0</dd>
+          <dt>Mines left to find</dt><dd id="lvLeft">–</dd>
+          <dt>Proven safe now</dt><dd id="lvSafeN">–</dd>
+          <dt>Reasoning time</dt><dd id="lvTime">–</dd>
+          <dt>Seed</dt><dd id="lvSeedOut">–</dd>
+        </dl>
+      </div>
+      <div class="card">
+        <b>Last decision</b>
+        <div id="lvDecision" class="small" style="margin-top:6px">–</div>
+      </div>
+      <div class="card">
+        <b>Move log</b>
+        <div class="log" id="lvLog" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== MAIN EXPERIMENT -->
+<section class="tab" id="tab-experiment">
+  <div class="eyebrow">How the evaluation works · and run it yourself</div>
+  <h1>The main experiment</h1>
+  <p class="lead" style="max-width:860px">The experiment asks one question: <b>how much does each AI technique help an agent
+    win?</b> Four players play the same set of boards; everything else is held fixed, so any difference in results comes from
+    the reasoning alone.</p>
+
+  <h2>1 · Design</h2>
+  <div class="grid g4">
+    <div class="card"><h3>Independent variable</h3><p class="small">The player: <b>Random</b>, <b>Local rules</b>, <b>Logic only</b> (Ch 7), <b>Logic + probability</b> (Ch 7 + 12). Each adds one technique to the one before.</p></div>
+    <div class="card"><h3>Boards</h3><p class="small">Beginner 9×9 / 10 mines, intermediate 16×16 / 40, expert 16×30 / 99. First click always safe.</p></div>
+    <div class="card"><h3>Pairing</h3><p class="small">Game number <i>s</i> uses random seed <i>s</i> for every player, so the reasoning players face <b>exactly the same mine layouts</b>. Each player's own random guesses use a separate random stream.</p></div>
+    <div class="card"><h3>Measures</h3><p class="small">Win rate (95% Wilson interval), McNemar's paired test, guesses per game, squares revealed, mean risk of guesses, calibration, time per analysis.</p></div>
+  </div>
+<pre style="margin-top:16px"><code>for board in [beginner, intermediate, expert]:
+    for player in [random, local rules, logic only, logic + probability]:
+        for seed in 0 .. N-1:
+            game   = new board(board size, seed)          ▸ same layout for every player
+            result = play(game, player)                    ▸ until won or a mine is hit
+            record won?, moves, guesses, risk of each guess, time per analysis
+        summarise: win rate + 95% CI, averages, calibration bins
+compare players on identical boards: McNemar's test</code></pre>
+
+  <h2>2 · One example: the same board, four players</h2>
+  <p class="prose">This is what a single row of the experiment looks like. All four players get the same seed. The three
+    reasoning players open in the centre, so they see the same first numbers; watch where they start to differ.</p>
+  <div class="controls">
+    <label class="field">Board <select id="exBoard">
+      <option value="beginner">Beginner 9×9 · 10</option>
+      <option value="intermediate" selected>Intermediate 16×16 · 40</option>
+      <option value="expert">Expert 16×30 · 99</option>
+    </select></label>
+    <label class="field">Seed (game number) <input type="number" id="exSeed" value="5" style="width:110px"></label>
+    <label class="field">Speed <input type="range" id="exSpeed" min="0" max="100" value="75"></label>
+    <button class="btn primary" id="exRun">▶ Run this example</button>
+    <button class="btn" id="exRandom">Random seed</button>
+  </div>
+  <div class="ex-grid" id="exGrid"></div>
+  <p class="small muted" id="exNote"></p>
+
+  <h2>3 · Run the experiment yourself</h2>
+  <p class="prose">This button runs the real experiment code (<code>experiments.py</code>) on this computer, the same code that
+    produced the report's numbers. Larger runs give tighter confidence intervals; the full 3,000-game run takes about 5 minutes.
+    Results of a run started here are saved in their own folder and never overwrite the official results.</p>
+  <div class="card">
+    <div class="controls" style="margin-bottom:6px">
+      <label class="field">Games per board per player
+        <select id="runGames">
+          <option value="50">50 (≈ 5 s)</option>
+          <option value="200" selected>200 (≈ 20 s)</option>
+          <option value="1000">1,000 (≈ 1.5 min)</option>
+          <option value="3000">3,000 (≈ 5 min, as in the report)</option>
+        </select></label>
+      <div class="field">Boards
+        <div style="display:flex;gap:10px">
+          <label class="toggle"><input type="checkbox" class="runBoard" value="beginner" checked>Beginner</label>
+          <label class="toggle"><input type="checkbox" class="runBoard" value="intermediate" checked>Intermediate</label>
+          <label class="toggle"><input type="checkbox" class="runBoard" value="expert" checked>Expert</label>
+        </div></div>
+      <div class="field">Players
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <label class="toggle"><input type="checkbox" class="runPlayer" value="random" checked>Random</label>
+          <label class="toggle"><input type="checkbox" class="runPlayer" value="rules" checked>Local rules</label>
+          <label class="toggle"><input type="checkbox" class="runPlayer" value="logic" checked>Logic only</label>
+          <label class="toggle"><input type="checkbox" class="runPlayer" value="probability" checked>Logic + probability</label>
+        </div></div>
+      <button class="btn primary" id="runStart">▶ Run experiment</button>
+      <button class="btn" id="runCancel" disabled>Stop</button>
+    </div>
+    <div id="runProgress"></div>
+  </div>
+  <div id="runResults"></div>
+</section>
+
+<!-- =============================================================== EXPERIMENTS -->
+<section class="tab" id="tab-experiments">
+  <div class="eyebrow">Evidence-based evaluation</div>
+  <h1>Experiments</h1>
+  <div class="prose">
+    <p class="lead">Every player plays the <b>same</b> seeded boards. The three reasoning players all open in the centre,
+      so they face identical mine layouts: a paired comparison. Numbers below are read live from
+      <code>results/summary.json</code>; rerun <code>python experiments.py</code> to regenerate them.</p>
+    <p class="small muted" id="expMeta"></p>
+    <h3>Questions</h3>
+    <ol>
+      <li>How much does complete logical inference (Ch 7) add over local rules?</li>
+      <li>How much does probabilistic guessing (Ch 12) add over logic with random guessing?</li>
+      <li>Are the agent's probabilities trustworthy (calibrated)?</li>
+      <li>Is exact reasoning fast enough to play in real time on expert boards?</li>
+    </ol>
+  </div>
+
+  <h2>Win rate</h2>
+  <div class="chart-legend" id="legendWin"></div>
+  <div class="card"><svg class="chart" id="chartWin" role="img" aria-label="Win rate by board and player with 95% confidence intervals"></svg></div>
+  <p class="small muted">Bars show the win rate; whiskers show the 95% Wilson confidence interval. Hover a bar for details.</p>
+
+  <div class="grid g2" style="margin-top:18px">
+    <div>
+      <h2>Guesses per game</h2>
+      <div class="card"><svg class="chart" id="chartGuess" role="img" aria-label="Average guesses per game"></svg></div>
+      <p class="small muted">Moves that were not proven safe (the opening click excluded). Fewer guesses can also mean the player died earlier.</p>
+    </div>
+    <div>
+      <h2>Progress before the game ended</h2>
+      <div class="card"><svg class="chart" id="chartProgress" role="img" aria-label="Average fraction of safe squares revealed"></svg></div>
+      <p class="small muted">Average fraction of the safe squares revealed, counting lost games too.</p>
+    </div>
+  </div>
+
+  <h2>Are the probabilities right? Calibration</h2>
+  <p class="prose">For every guess we stored the probability the agent assigned and whether the square really was a
+    mine. If the probabilities are correct, guesses rated 20% should hit a mine about 20% of the time: points should lie
+    on the diagonal.</p>
+  <div class="chart-legend" id="legendCal"></div>
+  <div class="grid g3" id="calCharts"></div>
+
+  <h2>Paired comparison on identical boards</h2>
+  <p class="prose small">"Only A won" counts boards that player A won and player B lost, and vice versa. McNemar's χ²
+    (1 degree of freedom) above 3.84 means the difference is significant at the 5% level; above 10.83, at 0.1%.</p>
+  <div class="table-wrap"><table id="pairedTable"></table></div>
+
+  <h2>All numbers</h2>
+  <div class="table-wrap"><table id="summaryTable"></table></div>
+
+  <h2>Interpretation</h2>
+  <div class="prose" id="interpretation"></div>
+</section>
+
+<!-- =============================================================== CHAPTERS -->
+<section class="tab" id="tab-chapters">
+  <div class="prose">
+    <div class="eyebrow">Course alignment · AIMA 4th ed., Global edition</div>
+    <h1>Chapters and references</h1>
+    <p class="lead">The project requirements ask that the main topic align with Chapters 3, 4, 6–9 or 11–13, and that the
+      role of every AI technique be clear. The project does not need every chapter; it needs each one it uses to have an
+      obvious job.</p>
+    <div class="table-wrap"><table>
+      <tr><th>Chapter</th><th>Role in this project</th><th>Weight</th></tr>
+      <tr><td><b>7 · Logical agents</b></td><td>Knowledge base of number sentences; entailment by model checking; refutation; soundness and completeness; Wumpus World analogy; the hybrid agent's "take a risk" step = our forced guess.</td><td><span class="pill">Core</span></td></tr>
+      <tr><td><b>12 · Quantifying uncertainty</b></td><td>Exact P(mine) by enumerating consistent frontier layouts (12.7 Wumpus pits); decision by maximum expected utility (12.1).</td><td><span class="pill">Core</span></td></tr>
+      <tr><td>4 · Search in complex environments</td><td>Belief states in partially observable environments (4.4): the set of layouts consistent with the percepts, which only shrinks.</td><td><span class="pill gray">Framing</span></td></tr>
+      <tr><td>13 · Probabilistic reasoning</td><td>The same model as a Bayesian network with deterministic CPTs; why exact enumeration beats sampling here.</td><td><span class="pill gray">Supporting</span></td></tr>
+      <tr><td>3 · Solving problems by searching</td><td>Problem formulation (states, actions, transition model, goal test); why plain search cannot be used with hidden information.</td><td><span class="pill gray">Framing</span></td></tr>
+      <tr><td>2 · Intelligent agents</td><td>PEAS, environment properties, and the agent type of each player.</td><td><span class="pill gray">Framing</span></td></tr>
+      <tr><td>6 · Adversarial search</td><td>Not used: minimax and alpha-beta need an opponent, and Minesweeper has none. Mine placement is a chance event, not an adversary.</td><td><span class="pill gray">Not used</span></td></tr>
+      <tr><td>8 · First-order logic</td><td>The rules could be written in FOL (Adjacent, Mine, Number), but "exactly n" counting is clumsy there and the board is finite, so we ground to propositional logic.</td><td><span class="pill gray">Not used</span></td></tr>
+      <tr><td>5 · Constraint satisfaction</td><td>Outside the allowed chapters (Global edition numbering). The same frontier ideas appear in the CSP literature; we mention it only as related work.</td><td><span class="pill gray">Related work</span></td></tr>
+      <tr><td>9 · Inference in FOL · 11 · Planning</td><td>Not needed: after grounding, FOL inference reduces to Ch 7; classical planning assumes full observability.</td><td><span class="pill gray">Not used</span></td></tr>
+    </table></div>
+
+    <h2>References</h2>
+    <ol class="small">
+      <li>S. Russell and P. Norvig. <i>Artificial Intelligence: A Modern Approach</i>, 4th ed., Global Edition. Pearson, 2022. Chapters 2, 3, 4.4, 7, 12, 13.</li>
+      <li>R. Kaye. "Minesweeper is NP-complete." <i>The Mathematical Intelligencer</i> 22(2): 9–15, 2000.</li>
+      <li>E. B. Wilson. "Probable inference, the law of succession, and statistical inference." <i>Journal of the American Statistical Association</i> 22: 209–212, 1927. (Confidence intervals.)</li>
+      <li>Q. McNemar. "Note on the sampling error of the difference between correlated proportions or percentages." <i>Psychometrika</i> 12: 153–157, 1947. (Paired test.)</li>
+    </ol>
+
+    <h2>Reproduce everything</h2>
+<pre><code>python -m unittest discover -s tests -v   # correctness tests (logic vs brute force, etc.)
+python experiments.py --games 3000         # regenerates results/ used by the Experiments tab
+python server.py                           # this website at http://127.0.0.1:8700</code></pre>
+    <p class="small muted">Only the Python standard library is required (Python 3.10+).</p>
+  </div>
+</section>
+</main>
+
+<footer>COMP 8700 · Fall 2026 · Logic and Probability for Safe Moves</footer>
+<div class="tooltip" id="tooltip"></div>
+<script src="/web/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+beginner     random       win   0.0% [0.0%, 0.1%]  guesses 4.08  0.00 ms/move  (0.5s)
+beginner     rules        win  67.0% [65.3%, 68.7%]  guesses 1.98  0.03 ms/move  (2.2s)
+beginner     logic        win  79.5% [78.1%, 80.9%]  guesses 1.44  0.10 ms/move  (6.0s)
+beginner     probability  win  85.2% [83.9%, 86.4%]  guesses 1.09  0.05 ms/move  (3.7s)
+intermediate random       win   0.0% [0.0%, 0.1%]  guesses 5.08  0.01 ms/move  (0.8s)
+intermediate rules        win  34.0% [32.3%, 35.7%]  guesses 3.24  0.05 ms/move  (10.1s)
+intermediate logic        win  59.5% [57.8%, 61.3%]  guesses 2.17  0.10 ms/move  (19.9s)
+intermediate probability  win  71.0% [69.4%, 72.6%]  guesses 2.23  0.08 ms/move  (18.7s)
+expert       random       win   0.0% [0.0%, 0.1%]  guesses 4.66  0.02 ms/move  (0.7s)
+expert       rules        win   1.1% [0.8%, 1.5%]  guesses 4.37  0.09 ms/move  (12.8s)
+expert       logic        win  19.8% [18.4%, 21.3%]  guesses 3.34  0.25 ms/move  (70.0s)
+expert       probability  win  36.0% [34.3%, 37.8%]  guesses 4.04  0.29 ms/move  (119.6s)
+done in 265s -> D:\Coding\INTRO TO AI\minesweeper_agent\results

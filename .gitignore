@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+# runs started from the website's "Run experiment" button (official results stay in results/)
+results/runs/
